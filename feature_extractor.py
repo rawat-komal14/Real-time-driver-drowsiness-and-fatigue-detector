@@ -2,14 +2,39 @@ import cv2
 import numpy as np
 import mediapipe as mp
 
-# Initialize MediaPipe Face Mesh module
-mp_face_mesh = mp.solutions.face_mesh
-face_mesh = mp_face_mesh.FaceMesh(
-    max_num_faces=1,
-    refine_landmarks=True,
-    min_detection_confidence=0.5,
-    min_tracking_confidence=0.5
-)
+# Compatibility handling for MediaPipe Legacy vs Tasks API (Python 3.13+)
+try:
+    # Legacy Solutions API (MediaPipe < 0.10.14)
+    mp_face_mesh = mp.solutions.face_mesh
+    face_mesh = mp_face_mesh.FaceMesh(
+        max_num_faces=1,
+        refine_landmarks=True,
+        min_detection_confidence=0.5,
+        min_tracking_confidence=0.5
+    )
+    USE_TASKS_API = False
+except AttributeError:
+    # Modern Tasks API (MediaPipe 0.10.14+ / Python 3.13)
+    from mediapipe.tasks import python
+    from mediapipe.tasks.python import vision
+    
+    # Download landmark model asset automatically if not present locally
+    import urllib.request
+    import os
+
+    MODEL_PATH = "face_landmarker.task"
+    if not os.path.exists(MODEL_PATH):
+        url = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
+        urllib.request.urlretrieve(url, MODEL_PATH)
+
+    base_options = python.BaseOptions(model_asset_path=MODEL_PATH)
+    options = vision.FaceLandmarkerOptions(
+        base_options=base_options,
+        running_mode=vision.RunningMode.IMAGE,
+        num_faces=1
+    )
+    landmarker = vision.FaceLandmarker.create_from_options(options)
+    USE_TASKS_API = True
 
 # Landmark indices for Left Eye, Right Eye, and Mouth
 LEFT_EYE_INDICES = [362, 385, 387, 263, 373, 380]
@@ -46,12 +71,20 @@ def extract_features(frame):
     """
     h, w, _ = frame.shape
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    results = face_mesh.process(rgb_frame)
 
-    if not results.multi_face_landmarks:
-        return frame, 0.0, 0.0, False
-
-    face_landmarks = results.multi_face_landmarks[0].landmark
+    if not USE_TASKS_API:
+        # Process frame with legacy API
+        results = face_mesh.process(rgb_frame)
+        if not results.multi_face_landmarks:
+            return frame, 0.0, 0.0, False
+        face_landmarks = results.multi_face_landmarks[0].landmark
+    else:
+        # Process frame with new Tasks API
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+        detection_result = landmarker.detect(mp_image)
+        if not detection_result.face_landmarks:
+            return frame, 0.0, 0.0, False
+        face_landmarks = detection_result.face_landmarks[0]
 
     def get_coords(indices):
         return np.array([(int(face_landmarks[idx].x * w), int(face_landmarks[idx].y * h)) for idx in indices])
@@ -68,7 +101,7 @@ def extract_features(frame):
     return frame, avg_ear, mar, True
 
 if __name__ == "__main__":
-    # Test feature extraction using your webcam
+    # Test feature extraction using webcam
     cap = cv2.VideoCapture(0)
     print("Starting webcam test... Press 'q' on your keyboard to exit.")
 
@@ -85,7 +118,7 @@ if __name__ == "__main__":
         else:
             cv2.putText(frame, "No Face Detected", (30, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
-        cv2.imshow("Person 1 - Feature Extractor Test", frame)
+        cv2.imshow("Feature Extractor Test", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
