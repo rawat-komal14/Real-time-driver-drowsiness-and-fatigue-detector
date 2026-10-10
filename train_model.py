@@ -1,20 +1,22 @@
+import json
+import joblib
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import classification_report, confusion_matrix
-import joblib
+
 
 def generate_synthetic_dataset(num_samples=1500):
-    """
-    Generates realistic synthetic facial landmark data based on spatial metrics:
+    """Generates realistic synthetic facial landmark data based on spatial metrics:
+
     0: Alert (High EAR, Low MAR)
     1: Mild Fatigue (Medium EAR, Occasional Yawning)
     2: Critical Drowsiness (Low EAR / Closed Eyes, High MAR / Yawning)
     """
     np.random.seed(42)
-    
+
     # Class 0: Alert (EAR ~ 0.28-0.38, MAR ~ 0.10-0.25)
     alert_ear = np.random.uniform(0.28, 0.38, num_samples // 3)
     alert_mar = np.random.uniform(0.10, 0.25, num_samples // 3)
@@ -37,6 +39,7 @@ def generate_synthetic_dataset(num_samples=1500):
 
     df = pd.DataFrame({'ear': ear, 'mar': mar, 'target': labels})
     return df
+
 
 def train_and_save_model():
     print("1. Generating driver fatigue dataset...")
@@ -61,13 +64,37 @@ def train_and_save_model():
 
     # Evaluate model
     y_pred = model.predict(X_test_scaled)
-    print("\n--- Model Evaluation Results ---")
-    print(classification_report(y_test, y_pred, target_names=['Alert (0)', 'Mild (1)', 'Drowsy (2)']))
 
-    # Save model and scaler files (.pkl)
+    # Compute metrics
+    acc = accuracy_score(y_test, y_pred)
+    prec, rec, f1, _ = precision_recall_fscore_support(
+        y_test, y_pred, average='weighted'
+    )
+
+    metrics_data = {
+        'accuracy': round(float(acc * 100), 2),
+        'precision': round(float(prec * 100), 2),
+        'recall': round(float(rec * 100), 2),
+        'f1_score': round(float(f1 * 100), 2),
+    }
+
+    print('\n--- Model Evaluation Results ---')
+    print(f"Accuracy : {metrics_data['accuracy']}%")
+    print(f"Precision: {metrics_data['precision']}%")
+    print(f"Recall   : {metrics_data['recall']}%")
+    print(f"F1-Score : {metrics_data['f1_score']}%")
+
+    # Save model, scaler, and metrics
     joblib.dump(model, 'drowsiness_model.pkl')
     joblib.dump(scaler, 'scaler.pkl')
-    print("3. Success! Saved 'drowsiness_model.pkl' and 'scaler.pkl'.")
 
-if __name__ == "__main__":
+    with open('metrics.json', 'w') as f:
+        json.dump(metrics_data, f)
+
+    print(
+        "3. Success! Saved 'drowsiness_model.pkl', 'scaler.pkl', and 'metrics.json'."
+    )
+
+
+if __name__ == '__main__':
     train_and_save_model()
