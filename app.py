@@ -162,7 +162,7 @@ def load_ml_assets():
 try:
     model, scaler, metrics = load_ml_assets()
 except Exception:
-    st.error("Model files not found. Run 'python trainmodel.py' first.")
+    st.error("Model files not found. Run 'python train_model.py' first.")
     st.stop()
 
 # Sidebar Setup
@@ -182,7 +182,7 @@ if metrics:
     m_col3.metric('Recall', f"{metrics['recall']}%")
     m_col4.metric('F1-Score', f"{metrics['f1_score']}%")
 else:
-    st.sidebar.info("Re-run 'python trainmodel.py' to generate metrics.")
+    st.sidebar.info("Re-run 'python train_model.py' to generate metrics.")
 
 st.sidebar.markdown('---')
 st.sidebar.markdown('### Reference Metrics')
@@ -322,8 +322,8 @@ if run_app:
             )
             alarm_placeholder.empty()
 
-        # Display Frame
+        # Display Frame (Updated parameter)
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        video_placeholder.image(frame_rgb, channels="RGB", use_column_width=True)
+        video_placeholder.image(frame_rgb, channels="RGB", use_container_width=True)
 
     cap.release()
