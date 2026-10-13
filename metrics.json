@@ -1,1 +1,6 @@
-{"accuracy": 91.9, "precision": 91.94, "recall": 91.9, "f1_score": 91.92}
+{
+    "accuracy": 91.9,
+    "precision": 91.94,
+    "recall": 91.9,
+    "f1_score": 91.92
+}
