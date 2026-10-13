@@ -2,15 +2,16 @@ import json
 import joblib
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 
 def generate_synthetic_dataset(num_samples=2100):
     """Generates realistic synthetic facial landmark data with natural feature overlap,
-
     facial variance, and webcam sensor noise to prevent overfitting.
     """
     np.random.seed(42)
@@ -21,7 +22,7 @@ def generate_synthetic_dataset(num_samples=2100):
     alert_mar = np.random.normal(loc=0.18, scale=0.055, size=n_per_class)
     alert_labels = np.zeros(n_per_class, dtype=int)
 
-    # Class 1: Mild Fatigue (Mean EAR: 0.24, Mean MAR: 0.33) - Significant overlap zone
+    # Class 1: Mild Fatigue (Mean EAR: 0.24, Mean MAR: 0.33)
     mild_ear = np.random.normal(loc=0.24, scale=0.050, size=n_per_class)
     mild_mar = np.random.normal(loc=0.33, scale=0.075, size=n_per_class)
     mild_labels = np.ones(n_per_class, dtype=int)
@@ -36,7 +37,7 @@ def generate_synthetic_dataset(num_samples=2100):
     mar = np.concatenate([alert_mar, mild_mar, drowsy_mar])
     labels = np.concatenate([alert_labels, mild_labels, drowsy_labels])
 
-    # Introduce 3% synthetic noise/outliers (e.g., sudden talking, camera jitter, or rapid blinks)
+    # Introduce 3% synthetic noise/outliers
     noise_indices = np.random.choice(
         num_samples, size=int(0.03 * num_samples), replace=False
     )
@@ -69,7 +70,6 @@ def train_and_save_model():
     X_test_scaled = scaler.transform(X_test)
 
     print("2. Training Regularized Random Forest Classifier...")
-    # Regularized hyperparameters (max_depth, min_samples_leaf) prevent overfitting
     model = RandomForestClassifier(
         n_estimators=100,
         max_depth=4,
@@ -82,7 +82,6 @@ def train_and_save_model():
     # Evaluate model
     y_pred = model.predict(X_test_scaled)
 
-    # Compute metrics
     acc = accuracy_score(y_test, y_pred)
     prec, rec, f1, _ = precision_recall_fscore_support(
         y_test, y_pred, average='weighted'
@@ -94,6 +93,19 @@ def train_and_save_model():
         'recall': round(float(rec * 100), 2),
         'f1_score': round(float(f1 * 100), 2),
     }
+
+    # Generate & Save Confusion Matrix Plot
+    cm = confusion_matrix(y_test, y_pred)
+    plt.figure(figsize=(5, 4))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Reds', cbar=False,
+                xticklabels=['Alert', 'Mild', 'Drowsy'],
+                yticklabels=['Alert', 'Mild', 'Drowsy'])
+    plt.xlabel('Predicted Label')
+    plt.ylabel('True Label')
+    plt.title('Confusion Matrix')
+    plt.tight_layout()
+    plt.savefig('confusion_matrix.png')
+    plt.close()
 
     print('\n--- Model Evaluation Results ---')
     print(f"Accuracy : {metrics_data['accuracy']}%")
@@ -109,7 +121,7 @@ def train_and_save_model():
         json.dump(metrics_data, f)
 
     print(
-        "3. Success! Saved 'drowsiness_model.pkl', 'scaler.pkl', and 'metrics.json'."
+        "3. Success! Saved 'drowsiness_model.pkl', 'scaler.pkl', 'metrics.json', and 'confusion_matrix.png'."
     )
 
 

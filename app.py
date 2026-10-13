@@ -171,7 +171,7 @@ run_app = st.sidebar.toggle('Start Camera', value=False)
 
 st.sidebar.markdown('---')
 
-# Display Model Training Performance Metrics in Sidebar
+# Display Model Training Performance Metrics & Confusion Matrix in Sidebar
 st.sidebar.markdown('### 📊 Model Performance')
 if metrics:
     m_col1, m_col2 = st.sidebar.columns(2)
@@ -181,14 +181,20 @@ if metrics:
     m_col3, m_col4 = st.sidebar.columns(2)
     m_col3.metric('Recall', f"{metrics['recall']}%")
     m_col4.metric('F1-Score', f"{metrics['f1_score']}%")
+    
+    st.sidebar.markdown('#### Confusion Matrix')
+    try:
+        st.sidebar.image('confusion_matrix.png')
+    except FileNotFoundError:
+        st.sidebar.info("Run 'python train_model.py' to generate confusion matrix.")
 else:
     st.sidebar.info("Re-run 'python train_model.py' to generate metrics.")
 
 st.sidebar.markdown('---')
 st.sidebar.markdown('### Reference Metrics')
 st.sidebar.markdown("""
-* **EAR (Eye Closure):** Drops below 0.20 when closing eyes.
-* **MAR (Yawning):** Exceeds 0.40 when yawning.
+- **EAR (Eye Closure):** Drops below 0.20 when closing eyes.
+- **MAR (Yawning):** Exceeds 0.40 when yawning.
 """)
 
 # Dashboard Grid
@@ -263,8 +269,7 @@ if run_app:
             if pred == 0:
                 drowsy_frame_counter = 0
                 status_placeholder.markdown(
-                    '<div class="status-card status-alert">STATUS:'
-                    ' ALERT</div>',
+                    '<div class="status-card status-alert">STATUS: ALERT</div>',
                     unsafe_allow_html=True,
                 )
                 alarm_placeholder.empty()
@@ -273,8 +278,7 @@ if run_app:
             elif pred == 1:
                 drowsy_frame_counter = 0
                 status_placeholder.markdown(
-                    '<div class="status-card status-mild">STATUS: MILD'
-                    ' FATIGUE</div>',
+                    '<div class="status-card status-mild">STATUS: MILD FATIGUE</div>',
                     unsafe_allow_html=True,
                 )
                 alarm_placeholder.empty()
@@ -283,8 +287,7 @@ if run_app:
             elif pred == 2:
                 drowsy_frame_counter += 1
                 status_placeholder.markdown(
-                    '<div class="status-card status-critical">STATUS:'
-                    ' DROWSY</div>',
+                    '<div class="status-card status-critical">STATUS: DROWSY</div>',
                     unsafe_allow_html=True,
                 )
                 status_txt, status_color = 'CRITICAL DROWSINESS', (0, 0, 255)
@@ -316,14 +319,13 @@ if run_app:
 
         else:
             status_placeholder.markdown(
-                '<div class="status-card status-off">SEARCHING FOR'
-                ' FACE...</div>',
+                '<div class="status-card status-off">SEARCHING FOR FACE...</div>',
                 unsafe_allow_html=True,
             )
             alarm_placeholder.empty()
 
-        # Display Frame (Updated parameter)
+        # Display Frame
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        video_placeholder.image(frame_rgb, channels="RGB", use_container_width=True)
+        video_placeholder.image(frame_rgb, channels="RGB")
 
     cap.release()
