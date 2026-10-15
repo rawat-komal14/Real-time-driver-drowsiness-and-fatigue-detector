@@ -1,4 +1,5 @@
 import json
+import os
 import cv2
 import joblib
 import numpy as np
@@ -68,8 +69,7 @@ section[data-testid="stSidebar"] {
     background: #151515;
     border: 1px solid #303030;
     border-radius: 10px;
-    padding: 17px 18px;
-    min-height: 105px;
+    padding: 15px 18px;
 }
 .metric-label {
     color: #A1A1AA;
@@ -80,9 +80,9 @@ section[data-testid="stSidebar"] {
 }
 .metric-value {
     color: #FFFFFF;
-    font-size: 29px;
+    font-size: 24px;
     font-weight: 800;
-    margin-top: 8px;
+    margin-top: 6px;
 }
 .panel {
     background: #121212;
@@ -132,15 +132,6 @@ section[data-testid="stSidebar"] {
     margin-top: 12px;
     border: 1px solid #EF4444;
 }
-div[data-testid="stMetric"] {
-    background: #151515;
-    border: 1px solid #303030;
-    padding: 12px 14px;
-    border-radius: 10px;
-}
-div[data-testid="stMetricLabel"] {
-    color: #A1A1AA;
-}
 hr {
     border-color: #303030;
 }
@@ -154,7 +145,7 @@ st.markdown(
 <div class="header-box">
     <div class="header-title">DRIVER DROWSINESS DETECTION SYSTEM</div>
     <div class="header-sub">
-        Real-time facial landmark analysis · Driver safety monitoring
+        Real-time facial landmark analysis · Multi-model driver safety monitoring
     </div>
 </div>
 """,
@@ -179,14 +170,11 @@ def load_ml_assets():
 try:
     model, scaler, metrics = load_ml_assets()
 except Exception as e:
-    st.error(
-        "Model files could not be loaded. "
-        "Run 'python train_model.py' first."
-    )
+    st.error("Model files could not be loaded. Run 'python train_model.py' first.")
     st.exception(e)
     st.stop()
 
-
+# Sidebar Controls
 st.sidebar.markdown("## ⚙️ Controls")
 run_app = st.sidebar.toggle("Start Camera", value=False)
 st.sidebar.caption("Enable the camera to begin live monitoring.")
@@ -198,135 +186,54 @@ st.sidebar.markdown(
     "- **MAR:** Mouth Aspect Ratio; increases during yawning."
 )
 
-st.sidebar.markdown("---")
-st.sidebar.markdown("## Class Labels")
-st.sidebar.markdown(
-    "- 🟢 **Alert** — alert prediction\n"
-    "- 🟡 **Mild fatigue** — possible fatigue\n"
-    "- 🔴 **Drowsy** — drowsiness prediction"
-)
+# Model Performance Comparison Table
+st.markdown('<div class="section-heading">Model Performance Comparison</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-subtitle">Side-by-side evaluation of Random Forest vs. Logistic Regression.</div>', unsafe_allow_html=True)
 
-st.sidebar.caption(
-    "Experimental student project. Do not rely on it as the sole "
-    "driving-safety mechanism."
-)
+if metrics and "random_forest" in metrics:
+    rf = metrics["random_forest"]
+    lr = metrics["logistic_regression"]
 
+    col_rf, col_lr = st.columns(2, gap="large")
 
-st.markdown(
-    '<div class="section-heading">Model Performance Overview</div>',
-    unsafe_allow_html=True
-)
-st.markdown(
-    '<div class="section-subtitle">'
-    'Evaluation results from the synthetic test dataset.</div>',
-    unsafe_allow_html=True
-)
+    with col_rf:
+        st.markdown("##### 🌲 Random Forest Classifier (Primary Model)")
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Accuracy", f"{rf['accuracy']}%")
+        c2.metric("Precision", f"{rf['precision']}%")
+        c3.metric("Recall", f"{rf['recall']}%")
+        c4.metric("F1 Score", f"{rf['f1_score']}%")
 
-if metrics:
-    metric_cols = st.columns(4)
-
-    metric_items = [
-        ("Accuracy", metrics["accuracy"]),
-        ("Precision", metrics["precision"]),
-        ("Recall", metrics["recall"]),
-        ("F1 Score", metrics["f1_score"]),
-    ]
-
-    for col, (label, value) in zip(metric_cols, metric_items):
-        with col:
-            st.markdown(
-                f'<div class="metric-tile">'
-                f'<div class="metric-label">{label}</div>'
-                f'<div class="metric-value">{value}%</div>'
-                f'</div>',
-                unsafe_allow_html=True
-            )
+    with col_lr:
+        st.markdown("##### 📈 Logistic Regression Classifier")
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Accuracy", f"{lr['accuracy']}%")
+        c2.metric("Precision", f"{lr['precision']}%")
+        c3.metric("Recall", f"{lr['recall']}%")
+        c4.metric("F1 Score", f"{lr['f1_score']}%")
 else:
-    st.warning(
-        "Metrics file not found. Run 'python train_model.py'."
-    )
-
+    st.warning("Metrics file not found. Run 'python train_model.py'.")
 
 st.markdown("")
-st.markdown(
-    '<div class="section-heading">Model Training Analysis</div>',
-    unsafe_allow_html=True
-)
-st.markdown(
-    '<div class="section-subtitle">'
-    'Test accuracy and log loss as the number of Random Forest trees increases.'
-    '</div>',
-    unsafe_allow_html=True
-)
+st.markdown('<div class="section-heading">Comparative Performance Charts</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-subtitle">Accuracy and log loss comparison across models.</div>', unsafe_allow_html=True)
 
-graph_col1, graph_col2 = st.columns(2, gap="large")
+if os.path.exists("model_comparison_graphs.png"):
+    st.image("model_comparison_graphs.png", use_container_width=True)
+else:
+    st.info("Run train_model.py to generate comparative graphs.")
 
-with graph_col1:
-    with st.container(border=True):
-        st.markdown("#### Accuracy")
-        try:
-            st.image("accuracy_graph.png", use_container_width=True)
-        except Exception:
-            st.info("Run train_model.py to generate the accuracy graph.")
+st.markdown('<div class="section-heading">Confusion Matrices Comparison</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-subtitle">Side-by-side classification breakdown for both models.</div>', unsafe_allow_html=True)
 
-with graph_col2:
-    with st.container(border=True):
-        st.markdown("#### Log Loss")
-        try:
-            st.image("loss_graph.png", use_container_width=True)
-        except Exception:
-            st.info("Run train_model.py to generate the loss graph.")
-
-
-st.markdown(
-    '<div class="section-heading">Confusion Matrix</div>',
-    unsafe_allow_html=True
-)
-st.markdown(
-    '<div class="section-subtitle">'
-    'Correct and incorrect predictions for the three classes.</div>',
-    unsafe_allow_html=True
-)
-
-cm_col1, cm_col2 = st.columns([1, 1.7], gap="large")
-
-with cm_col1:
-    try:
-        st.image("confusion_matrix.png", use_container_width=True)
-    except Exception:
-        st.info("Run train_model.py to generate the confusion matrix.")
-
-with cm_col2:
-    st.markdown(
-        """
-        <div class="panel">
-            <b>How to read this matrix</b>
-            <p style="color:#A1A1AA; font-size:14px;">
-            Rows show the true class, and columns show the predicted class.
-            Values on the diagonal are correct classifications. Values outside
-            the diagonal are misclassifications.
-            </p>
-            <hr>
-            <span style="color:#86EFAC;">Alert</span> ·
-            <span style="color:#FACC15;">Mild fatigue</span> ·
-            <span style="color:#FCA5A5;">Drowsy</span>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
+if os.path.exists("confusion_matrices_comparison.png"):
+    st.image("confusion_matrices_comparison.png", use_container_width=True)
+else:
+    st.info("Run train_model.py to generate confusion matrices.")
 
 st.markdown("---")
-st.markdown(
-    '<div class="section-heading">Live Driver Monitoring</div>',
-    unsafe_allow_html=True
-)
-st.markdown(
-    '<div class="section-subtitle">'
-    'Monitor eye and mouth measurements and the current driver status.'
-    '</div>',
-    unsafe_allow_html=True
-)
+st.markdown('<div class="section-heading">Live Driver Monitoring</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-subtitle">Real-time webcam inference and active safety monitoring.</div>', unsafe_allow_html=True)
 
 video_col, monitor_col = st.columns([1.8, 1], gap="large")
 
@@ -334,19 +241,14 @@ with video_col:
     with st.container(border=True):
         st.markdown("#### Camera Feed")
         video_placeholder = st.empty()
-        video_placeholder.info(
-            "Camera is on standby. Switch on Start Camera in the sidebar."
-        )
+        video_placeholder.info("Camera is on standby. Switch on Start Camera in the sidebar.")
 
 with monitor_col:
     with st.container(border=True):
         st.markdown("#### Driver Status")
 
         status_placeholder = st.empty()
-        status_placeholder.markdown(
-            '<div class="status-card status-off">SYSTEM STANDBY</div>',
-            unsafe_allow_html=True
-        )
+        status_placeholder.markdown('<div class="status-card status-off">SYSTEM STANDBY</div>', unsafe_allow_html=True)
 
         ear_card = st.empty()
         ear_bar = st.empty()
@@ -354,27 +256,23 @@ with monitor_col:
         mar_bar = st.empty()
         alarm_placeholder = st.empty()
 
-
+# Live Webcam Loop
 if run_app:
     cap = cv2.VideoCapture(0)
 
-    EYE_CLOSED_THRESHOLD = 0.20
-    ALARM_THRESHOLD_FRAMES = 8
+    EYE_CLOSED_THRESHOLD = 0.18
+    ALARM_THRESHOLD_FRAMES = 5
 
     closed_eye_counter = 0
     drowsy_frame_counter = 0
     alarm_active = False
 
     if not cap.isOpened():
-        st.error(
-            "Unable to access the camera. Check camera permissions "
-            "and close other applications using it."
-        )
+        st.error("Unable to access the camera. Check camera permissions and close other apps using it.")
     else:
         try:
             while True:
                 ret, frame = cap.read()
-
                 if not ret:
                     st.error("Camera stream unavailable.")
                     break
@@ -386,34 +284,23 @@ if run_app:
                     scaled_features = scaler.transform(features)
                     pred = int(model.predict(scaled_features)[0])
 
-                    print(
-                        f"EAR: {ear:.3f} | MAR: {mar:.3f} | "
-                        f"Prediction: {pred}"
-                    )
-
                     ear_card.markdown(
                         f'<div class="metric-tile">'
                         f'<div class="metric-label">Eye Aspect Ratio (EAR)</div>'
                         f'<div class="metric-value">{ear:.3f}</div>'
-                        f'</div>',
-                        unsafe_allow_html=True
+                        f"</div>",
+                        unsafe_allow_html=True,
                     )
-
-                    ear_bar.progress(
-                        min(max(float(ear / 0.4), 0.0), 1.0)
-                    )
+                    ear_bar.progress(min(max(float(ear / 0.4), 0.0), 1.0))
 
                     mar_card.markdown(
                         f'<div class="metric-tile">'
                         f'<div class="metric-label">Mouth Aspect Ratio (MAR)</div>'
                         f'<div class="metric-value">{mar:.3f}</div>'
-                        f'</div>',
-                        unsafe_allow_html=True
+                        f"</div>",
+                        unsafe_allow_html=True,
                     )
-
-                    mar_bar.progress(
-                        min(max(float(mar / 0.8), 0.0), 1.0)
-                    )
+                    mar_bar.progress(min(max(float(mar / 0.8), 0.0), 1.0))
 
                     if ear < EYE_CLOSED_THRESHOLD:
                         closed_eye_counter += 1
@@ -425,12 +312,8 @@ if run_app:
                     else:
                         drowsy_frame_counter = 0
 
-                    sustained_eye_closure = (
-                        closed_eye_counter >= ALARM_THRESHOLD_FRAMES
-                    )
-                    sustained_drowsiness = (
-                        drowsy_frame_counter >= ALARM_THRESHOLD_FRAMES
-                    )
+                    sustained_eye_closure = (closed_eye_counter >= ALARM_THRESHOLD_FRAMES)
+                    sustained_drowsiness = (drowsy_frame_counter >= ALARM_THRESHOLD_FRAMES)
 
                     if sustained_eye_closure or sustained_drowsiness:
                         status_txt = "CRITICAL DROWSINESS"
@@ -438,10 +321,8 @@ if run_app:
                         status_class = "status-critical"
 
                         alarm_placeholder.markdown(
-                            '<div class="alarm-box">'
-                            '⚠️ CRITICAL DROWSINESS ALARM ⚠️'
-                            '</div>',
-                            unsafe_allow_html=True
+                            '<div class="alarm-box">⚠️ CRITICAL DROWSINESS ALARM ⚠️</div>',
+                            unsafe_allow_html=True,
                         )
 
                         if not alarm_active and winsound:
@@ -464,40 +345,12 @@ if run_app:
                         alarm_active = False
 
                     status_placeholder.markdown(
-                        f'<div class="status-card {status_class}">'
-                        f'STATUS: {status_txt}</div>',
-                        unsafe_allow_html=True
+                        f'<div class="status-card {status_class}">STATUS: {status_txt}</div>',
+                        unsafe_allow_html=True,
                     )
 
-                    cv2.putText(
-                        frame,
-                        f"STATE: {status_txt}",
-                        (25, 40),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.8,
-                        status_color,
-                        2
-                    )
-
-                    cv2.putText(
-                        frame,
-                        f"EAR: {ear:.3f}",
-                        (25, 75),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.7,
-                        (255, 255, 255),
-                        2
-                    )
-
-                    cv2.putText(
-                        frame,
-                        f"Closed frames: {closed_eye_counter}",
-                        (25, 110),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.65,
-                        (255, 255, 255),
-                        2
-                    )
+                    cv2.putText(frame, f"STATE: {status_txt}", (25, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, status_color, 2)
+                    cv2.putText(frame, f"EAR: {ear:.3f}", (25, 75), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
                 else:
                     closed_eye_counter = 0
@@ -505,9 +358,8 @@ if run_app:
                     alarm_active = False
 
                     status_placeholder.markdown(
-                        '<div class="status-card status-off">'
-                        'SEARCHING FOR FACE...</div>',
-                        unsafe_allow_html=True
+                        '<div class="status-card status-off">SEARCHING FOR FACE...</div>',
+                        unsafe_allow_html=True,
                     )
 
                     alarm_placeholder.empty()
@@ -517,18 +369,10 @@ if run_app:
                     mar_bar.empty()
 
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-                video_placeholder.image(
-                    frame_rgb,
-                    channels="RGB",
-                    use_container_width=True
-                )
+                video_placeholder.image(frame_rgb, channels="RGB", use_container_width=True)
 
         finally:
             cap.release()
 
 else:
-    st.caption(
-        "Camera is off. Model metrics, graphs, and confusion matrix "
-        "remain available above."
-    )
+    st.caption("Camera is off. Model metrics, graphs, and confusion matrix remain available above.")
