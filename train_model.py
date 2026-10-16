@@ -132,21 +132,22 @@ def train_and_save_model():
         # Accuracy Plot
         bars1 = ax1.bar(models, accuracies, color=["#EF4444", "#3B82F6"], width=0.5)
         ax1.set_ylabel("Test Accuracy (%)", color="#E5E7EB")
-        ax1.set_title("Model Accuracy Comparison", fontweight="bold", color="#FFFFFF")
-        ax1.set_ylim(80, 100)
+        ax1.set_title("Model Accuracy Comparison", fontweight="bold", color="#FFFFFF", pad=20)
+        ax1.set_ylim(80, 103)
         ax1.grid(True, color="#444444", alpha=0.3, axis="y")
         for bar in bars1:
             yval = bar.get_height()
-            ax1.text(bar.get_x() + bar.get_width()/2, yval + 0.5, f"{yval:.2f}%", ha="center", va="bottom", color="white", fontweight="bold")
+            ax1.text(bar.get_x() + bar.get_width()/2, yval + 0.8, f"{yval:.2f}%", ha="center", va="bottom", color="white", fontweight="bold")
 
-        # Loss Plot
+        # Loss Plot (FIXED HEADROOM & TITLE PADDING)
         bars2 = ax2.bar(models, losses, color=["#EF4444", "#3B82F6"], width=0.5)
         ax2.set_ylabel("Log Loss", color="#E5E7EB")
-        ax2.set_title("Model Log Loss Comparison", fontweight="bold", color="#FFFFFF")
+        ax2.set_title("Model Log Loss Comparison", fontweight="bold", color="#FFFFFF", pad=20)
+        ax2.set_ylim(0, max(losses) * 1.45)  # Added headroom so labels don't touch the title
         ax2.grid(True, color="#444444", alpha=0.3, axis="y")
         for bar in bars2:
             yval = bar.get_height()
-            ax2.text(bar.get_x() + bar.get_width()/2, yval + 0.01, f"{yval:.4f}", ha="center", va="bottom", color="white", fontweight="bold")
+            ax2.text(bar.get_x() + bar.get_width()/2, yval + 0.003, f"{yval:.4f}", ha="center", va="bottom", color="white", fontweight="bold")
 
         fig.tight_layout()
         fig.savefig("model_comparison_graphs.png", dpi=160, facecolor=fig.get_facecolor(), bbox_inches="tight")
@@ -166,7 +167,7 @@ def train_and_save_model():
         ax1.set_yticks([0, 1, 2], labels=["Alert", "Mild", "Drowsy"])
         ax1.set_xlabel("Predicted Label", color="#E5E7EB")
         ax1.set_ylabel("True Label", color="#E5E7EB")
-        ax1.set_title("Random Forest Confusion Matrix", color="#FFFFFF", fontweight="bold")
+        ax1.set_title("Random Forest Confusion Matrix", color="#FFFFFF", fontweight="bold", pad=15)
         for i in range(3):
             for j in range(3):
                 ax1.text(j, i, str(cm_rf[i, j]), ha="center", va="center", color="white", fontweight="bold")
@@ -178,7 +179,7 @@ def train_and_save_model():
         ax2.set_yticks([0, 1, 2], labels=["Alert", "Mild", "Drowsy"])
         ax2.set_xlabel("Predicted Label", color="#E5E7EB")
         ax2.set_ylabel("True Label", color="#E5E7EB")
-        ax2.set_title("Logistic Regression Confusion Matrix", color="#FFFFFF", fontweight="bold")
+        ax2.set_title("Logistic Regression Confusion Matrix", color="#FFFFFF", fontweight="bold", pad=15)
         for i in range(3):
             for j in range(3):
                 ax2.text(j, i, str(cm_lr[i, j]), ha="center", va="center", color="white", fontweight="bold")
