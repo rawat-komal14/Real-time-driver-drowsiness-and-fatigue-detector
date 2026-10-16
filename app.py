@@ -27,9 +27,9 @@ st.markdown(
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 .block-container {
-    padding-top: 1.6rem;
+    padding-top: 1.4rem;
     padding-bottom: 2rem;
-    max-width: 1500px;
+    max-width: 1550px;
 }
 section[data-testid="stSidebar"] {
     background: #111114;
@@ -39,37 +39,27 @@ section[data-testid="stSidebar"] {
     background: linear-gradient(110deg, #171717, #101010);
     border: 1px solid #303030;
     border-left: 5px solid #DC2626;
-    padding: 22px 26px;
+    padding: 20px 24px;
     border-radius: 12px;
-    margin-bottom: 22px;
+    margin-bottom: 18px;
 }
 .header-title {
-    font-size: 27px;
+    font-size: 26px;
     font-weight: 800;
     color: #FFFFFF;
     letter-spacing: .4px;
 }
 .header-sub {
-    font-size: 14px;
-    color: #A1A1AA;
-    margin-top: 7px;
-}
-.section-heading {
-    font-size: 21px;
-    font-weight: 750;
-    color: #F9FAFB;
-    margin: 10px 0 4px 0;
-}
-.section-subtitle {
-    color: #A1A1AA;
     font-size: 13px;
-    margin-bottom: 14px;
+    color: #A1A1AA;
+    margin-top: 5px;
 }
 .metric-tile {
     background: #151515;
     border: 1px solid #303030;
     border-radius: 10px;
-    padding: 15px 18px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
 }
 .metric-label {
     color: #A1A1AA;
@@ -80,19 +70,13 @@ section[data-testid="stSidebar"] {
 }
 .metric-value {
     color: #FFFFFF;
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 800;
-    margin-top: 6px;
-}
-.panel {
-    background: #121212;
-    border: 1px solid #303030;
-    border-radius: 12px;
-    padding: 15px;
+    margin-top: 4px;
 }
 .status-card {
     width: 100%;
-    padding: 15px 10px;
+    padding: 14px 10px;
     border-radius: 9px;
     font-size: 15px;
     font-weight: 850;
@@ -124,12 +108,12 @@ section[data-testid="stSidebar"] {
 .alarm-box {
     background: #991B1B;
     color: #FFFFFF;
-    padding: 15px 10px;
+    padding: 14px 10px;
     border-radius: 9px;
     text-align: center;
     font-weight: 900;
-    font-size: 14px;
-    margin-top: 12px;
+    font-size: 13px;
+    margin-top: 10px;
     border: 1px solid #EF4444;
 }
 hr {
@@ -140,18 +124,18 @@ hr {
     unsafe_allow_html=True,
 )
 
+# Header Banner
 st.markdown(
     """
 <div class="header-box">
-    <div class="header-title">DRIVER DROWSINESS DETECTION SYSTEM</div>
+    <div class="header-title">🚗 DRIVER DROWSINESS DETECTION SYSTEM</div>
     <div class="header-sub">
-        Real-time facial landmark analysis · Multi-model driver safety monitoring
+        Real-time facial landmark analysis · Multi-model safety monitoring & performance analytics
     </div>
 </div>
 """,
     unsafe_allow_html=True,
 )
-
 
 @st.cache_resource
 def load_ml_assets():
@@ -166,7 +150,6 @@ def load_ml_assets():
 
     return model, scaler, metrics
 
-
 try:
     model, scaler, metrics = load_ml_assets()
 except Exception as e:
@@ -175,88 +158,111 @@ except Exception as e:
     st.stop()
 
 # Sidebar Controls
-st.sidebar.markdown("## ⚙️ Controls")
+st.sidebar.markdown("## ⚙️ Control Panel")
 run_app = st.sidebar.toggle("Start Camera", value=False)
-st.sidebar.caption("Enable the camera to begin live monitoring.")
+st.sidebar.caption("Toggle to activate live webcam inference.")
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("## Reference Metrics")
+st.sidebar.markdown("## 📌 Reference Metrics")
 st.sidebar.markdown(
-    "- **EAR:** Eye Aspect Ratio; decreases as eyes close.\n"
-    "- **MAR:** Mouth Aspect Ratio; increases during yawning."
+    "- **EAR (Eye Aspect Ratio):** Drops below threshold during eye closure.\n"
+    "- **MAR (Mouth Aspect Ratio):** Increases during yawning and fatigue."
 )
 
-# Model Performance Comparison Table
-st.markdown('<div class="section-heading">Model Performance Comparison</div>', unsafe_allow_html=True)
-st.markdown('<div class="section-subtitle">Side-by-side evaluation of Random Forest vs. Logistic Regression.</div>', unsafe_allow_html=True)
+# Main Application Tabs for Structured UX
+tab_live, tab_metrics, tab_matrix = st.tabs([
+    "🚗 Live Monitoring", 
+    "📊 Model Performance & Charts", 
+    "🧩 Confusion Matrices"
+])
 
-if metrics and "random_forest" in metrics:
-    rf = metrics["random_forest"]
-    lr = metrics["logistic_regression"]
+# ---------------- TAB 1: LIVE MONITORING ----------------
+with tab_live:
+    st.markdown("### Real-Time Webcam Inference & Active Safety Monitoring")
+    st.markdown("Stream active video analysis, eye/mouth tracking parameters, and instant hazard alerts.")
+    
+    video_col, monitor_col = st.columns([1.7, 1], gap="large")
 
-    col_rf, col_lr = st.columns(2, gap="large")
+    with video_col:
+        with st.container(border=True):
+            st.markdown("#### 🎥 Live Camera Stream")
+            video_placeholder = st.empty()
+            if not run_app:
+                video_placeholder.info("Camera is on standby. Switch on 'Start Camera' in the sidebar.")
 
-    with col_rf:
-        st.markdown("##### 🌲 Random Forest Classifier (Primary Model)")
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Accuracy", f"{rf['accuracy']}%")
-        c2.metric("Precision", f"{rf['precision']}%")
-        c3.metric("Recall", f"{rf['recall']}%")
-        c4.metric("F1 Score", f"{rf['f1_score']}%")
+    with monitor_col:
+        with st.container(border=True):
+            st.markdown("#### 🛡️ Driver Status Panel")
 
-    with col_lr:
-        st.markdown("##### 📈 Logistic Regression Classifier")
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Accuracy", f"{lr['accuracy']}%")
-        c2.metric("Precision", f"{lr['precision']}%")
-        c3.metric("Recall", f"{lr['recall']}%")
-        c4.metric("F1 Score", f"{lr['f1_score']}%")
-else:
-    st.warning("Metrics file not found. Run 'python train_model.py'.")
+            status_placeholder = st.empty()
+            status_placeholder.markdown('<div class="status-card status-off">SYSTEM STANDBY</div>', unsafe_allow_html=True)
 
-st.markdown("")
-st.markdown('<div class="section-heading">Comparative Performance Charts</div>', unsafe_allow_html=True)
-st.markdown('<div class="section-subtitle">Accuracy and log loss comparison across models.</div>', unsafe_allow_html=True)
+            ear_card = st.empty()
+            ear_bar = st.empty()
+            mar_card = st.empty()
+            mar_bar = st.empty()
+            alarm_placeholder = st.empty()
 
-if os.path.exists("model_comparison_graphs.png"):
-    st.image("model_comparison_graphs.png", use_container_width=True)
-else:
-    st.info("Run train_model.py to generate comparative graphs.")
+            # Initialize placeholders when idle
+            if not run_app:
+                ear_card.markdown(
+                    '<div class="metric-tile"><div class="metric-label">Eye Aspect Ratio (EAR)</div><div class="metric-value">--</div></div>',
+                    unsafe_allow_html=True
+                )
+                mar_card.markdown(
+                    '<div class="metric-tile"><div class="metric-label">Mouth Aspect Ratio (MAR)</div><div class="metric-value">--</div></div>',
+                    unsafe_allow_html=True
+                )
 
-st.markdown('<div class="section-heading">Confusion Matrices Comparison</div>', unsafe_allow_html=True)
-st.markdown('<div class="section-subtitle">Side-by-side classification breakdown for both models.</div>', unsafe_allow_html=True)
+# ---------------- TAB 2: MODEL PERFORMANCE ----------------
+with tab_metrics:
+    st.markdown("### Model Performance Evaluation")
+    st.markdown("Comparative accuracy, precision, recall, and log loss metrics across algorithms.")
 
-if os.path.exists("confusion_matrices_comparison.png"):
-    st.image("confusion_matrices_comparison.png", use_container_width=True)
-else:
-    st.info("Run train_model.py to generate confusion matrices.")
+    if metrics and "random_forest" in metrics:
+        rf = metrics["random_forest"]
+        lr = metrics["logistic_regression"]
 
-st.markdown("---")
-st.markdown('<div class="section-heading">Live Driver Monitoring</div>', unsafe_allow_html=True)
-st.markdown('<div class="section-subtitle">Real-time webcam inference and active safety monitoring.</div>', unsafe_allow_html=True)
+        col_rf, col_lr = st.columns(2, gap="large")
 
-video_col, monitor_col = st.columns([1.8, 1], gap="large")
+        with col_rf:
+            with st.container(border=True):
+                st.markdown("#### 🌲 Random Forest Classifier (Primary Model)")
+                c1, c2, c3, c4 = st.columns(4)
+                c1.metric("Accuracy", f"{rf['accuracy']}%")
+                c2.metric("Precision", f"{rf['precision']}%")
+                c3.metric("Recall", f"{rf['recall']}%")
+                c4.metric("F1 Score", f"{rf['f1_score']}%")
 
-with video_col:
-    with st.container(border=True):
-        st.markdown("#### Camera Feed")
-        video_placeholder = st.empty()
-        video_placeholder.info("Camera is on standby. Switch on Start Camera in the sidebar.")
+        with col_lr:
+            with st.container(border=True):
+                st.markdown("#### 📈 Logistic Regression Classifier")
+                c1, c2, c3, c4 = st.columns(4)
+                c1.metric("Accuracy", f"{lr['accuracy']}%")
+                c2.metric("Precision", f"{lr['precision']}%")
+                c3.metric("Recall", f"{lr['recall']}%")
+                c4.metric("F1 Score", f"{lr['f1_score']}%")
+    else:
+        st.warning("Metrics file not found. Run 'python train_model.py'.")
 
-with monitor_col:
-    with st.container(border=True):
-        st.markdown("#### Driver Status")
+    st.markdown("---")
+    st.markdown("### Comparative Performance Charts")
+    if os.path.exists("model_comparison_graphs.png"):
+        st.image("model_comparison_graphs.png", use_container_width=True)
+    else:
+        st.info("Run train_model.py to generate comparative graphs.")
 
-        status_placeholder = st.empty()
-        status_placeholder.markdown('<div class="status-card status-off">SYSTEM STANDBY</div>', unsafe_allow_html=True)
+# ---------------- TAB 3: CONFUSION MATRICES ----------------
+with tab_matrix:
+    st.markdown("### Classification Breakdown (Confusion Matrices)")
+    st.markdown("Detailed true label vs. predicted label comparisons for multi-class fatigue detection.")
 
-        ear_card = st.empty()
-        ear_bar = st.empty()
-        mar_card = st.empty()
-        mar_bar = st.empty()
-        alarm_placeholder = st.empty()
+    if os.path.exists("confusion_matrices_comparison.png"):
+        st.image("confusion_matrices_comparison.png", use_container_width=True)
+    else:
+        st.info("Run train_model.py to generate confusion matrices.")
 
-# Live Webcam Loop
+# ---------------- LIVE WEBCAM EXECUTION LOOP ----------------
 if run_app:
     cap = cv2.VideoCapture(0)
 
@@ -271,7 +277,7 @@ if run_app:
         st.error("Unable to access the camera. Check camera permissions and close other apps using it.")
     else:
         try:
-            while True:
+            while run_app:
                 ret, frame = cap.read()
                 if not ret:
                     st.error("Camera stream unavailable.")
@@ -363,8 +369,14 @@ if run_app:
                     )
 
                     alarm_placeholder.empty()
-                    ear_card.info("EAR: waiting for face")
-                    mar_card.info("MAR: waiting for face")
+                    ear_card.markdown(
+                        '<div class="metric-tile"><div class="metric-label">Eye Aspect Ratio (EAR)</div><div class="metric-value">Waiting...</div></div>',
+                        unsafe_allow_html=True
+                    )
+                    mar_card.markdown(
+                        '<div class="metric-tile"><div class="metric-label">Mouth Aspect Ratio (MAR)</div><div class="metric-value">Waiting...</div></div>',
+                        unsafe_allow_html=True
+                    )
                     ear_bar.empty()
                     mar_bar.empty()
 
@@ -373,6 +385,3 @@ if run_app:
 
         finally:
             cap.release()
-
-else:
-    st.caption("Camera is off. Model metrics, graphs, and confusion matrix remain available above.")
