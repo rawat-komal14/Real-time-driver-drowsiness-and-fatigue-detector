@@ -7,10 +7,10 @@
         "log_loss": 0.142
     },
     "logistic_regression": {
-        "accuracy": 95.95,
-        "precision": 95.95,
-        "recall": 95.95,
-        "f1_score": 95.94,
-        "log_loss": 0.1133
+        "accuracy": 93.81,
+        "precision": 94.08,
+        "recall": 93.81,
+        "f1_score": 93.68,
+        "log_loss": 0.4854
     }
 }

@@ -83,7 +83,8 @@ def train_and_save_model():
     rf_proba = rf_model.predict_proba(X_test_scaled)
 
     # --- Train Logistic Regression ---
-    lr_model = LogisticRegression(random_state=42, max_iter=1000)
+    
+    lr_model = LogisticRegression(C=0.005, random_state=42)
     lr_model.fit(X_train_scaled, y_train)
     lr_pred = lr_model.predict(X_test_scaled)
     lr_proba = lr_model.predict_proba(X_test_scaled)

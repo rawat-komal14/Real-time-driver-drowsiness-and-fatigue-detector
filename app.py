@@ -248,7 +248,8 @@ with tab_metrics:
     st.markdown("---")
     st.markdown("### Comparative Performance Charts")
     if os.path.exists("model_comparison_graphs.png"):
-        st.image("model_comparison_graphs.png", use_container_width=True)
+        
+        st.image("model_comparison_graphs.png", use_column_width=True)
     else:
         st.info("Run train_model.py to generate comparative graphs.")
 
@@ -258,7 +259,8 @@ with tab_matrix:
     st.markdown("Detailed true label vs. predicted label comparisons for multi-class fatigue detection.")
 
     if os.path.exists("confusion_matrices_comparison.png"):
-        st.image("confusion_matrices_comparison.png", use_container_width=True)
+        
+        st.image("confusion_matrices_comparison.png", use_column_width=True)
     else:
         st.info("Run train_model.py to generate confusion matrices.")
 
@@ -381,7 +383,8 @@ if run_app:
                     mar_bar.empty()
 
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                video_placeholder.image(frame_rgb, channels="RGB", use_container_width=True)
+                
+                video_placeholder.image(frame_rgb, channels="RGB", use_column_width=True)
 
         finally:
             cap.release()
