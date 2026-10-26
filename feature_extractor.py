@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import mediapipe as mp
 
-# Compatibility handling for MediaPipe Legacy vs Tasks API (Python 3.13+)
+
 try:
     # Legacy Solutions API (MediaPipe < 0.10.14)
     mp_face_mesh = mp.solutions.face_mesh

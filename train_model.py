@@ -16,7 +16,7 @@ from sklearn.preprocessing import StandardScaler
 
 
 def generate_synthetic_dataset(num_samples=2100):
-    """Generates a realistic driver fatigue dataset with natural feature overlap."""
+
     np.random.seed(42)
     n_per_class = num_samples // 3
 
@@ -69,7 +69,7 @@ def train_and_save_model():
 
     print("2. Training Random Forest & Logistic Regression Models...")
 
-    # --- Train Random Forest ---
+    #  Train Random Forest 
     rf_model = RandomForestClassifier(
         n_estimators=100,
         max_depth=4,
@@ -82,7 +82,7 @@ def train_and_save_model():
     rf_pred = rf_model.predict(X_test_scaled)
     rf_proba = rf_model.predict_proba(X_test_scaled)
 
-    # --- Train Logistic Regression ---
+    #  Train Logistic Regression 
     
     lr_model = LogisticRegression(C=0.005, random_state=42)
     lr_model.fit(X_train_scaled, y_train)
@@ -120,7 +120,7 @@ def train_and_save_model():
 
     print("3. Generating Comparative Evaluation Plots...")
 
-    # --- Generate Comparative Accuracy & Loss Bar Chart ---
+    #  Generate Comparative Accuracy & Loss Bar Chart
     with plt.style.context("dark_background"):
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4), facecolor="#151515")
         ax1.set_facecolor("#151515")
