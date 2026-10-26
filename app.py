@@ -119,6 +119,14 @@ section[data-testid="stSidebar"] {
 hr {
     border-color: #303030;
 }
+
+[data-testid="stMetricValue"] {
+    color: #FFFFFF !important;
+    font-weight: 800 !important;
+}
+[data-testid="stMetricLabel"] {
+    color: #D4D4D8 !important;
+}
 </style>
 """,
     unsafe_allow_html=True,
@@ -176,7 +184,7 @@ tab_live, tab_metrics, tab_matrix = st.tabs([
     "🧩 Confusion Matrices"
 ])
 
-# ---------------- TAB 1: LIVE MONITORING ----------------
+# LIVE MONITORING
 with tab_live:
     st.markdown("### Real-Time Webcam Inference & Active Safety Monitoring")
     st.markdown("Stream active video analysis, eye/mouth tracking parameters, and instant hazard alerts.")
@@ -214,7 +222,7 @@ with tab_live:
                     unsafe_allow_html=True
                 )
 
-# ---------------- TAB 2: MODEL PERFORMANCE ----------------
+# TAB 2: MODEL PERFORMANCE
 with tab_metrics:
     st.markdown("### Model Performance Evaluation")
     st.markdown("Comparative accuracy, precision, recall, and log loss metrics across algorithms.")
@@ -249,22 +257,23 @@ with tab_metrics:
     st.markdown("### Comparative Performance Charts")
     if os.path.exists("model_comparison_graphs.png"):
         
-        st.image("model_comparison_graphs.png", use_column_width=True)
+        
+        st.image("model_comparison_graphs.png")
     else:
         st.info("Run train_model.py to generate comparative graphs.")
 
-# ---------------- TAB 3: CONFUSION MATRICES ----------------
+#  TAB 3: CONFUSION MATRICES
 with tab_matrix:
     st.markdown("### Classification Breakdown (Confusion Matrices)")
     st.markdown("Detailed true label vs. predicted label comparisons for multi-class fatigue detection.")
 
     if os.path.exists("confusion_matrices_comparison.png"):
         
-        st.image("confusion_matrices_comparison.png", use_column_width=True)
+        st.image("model_comparison_graphs.png")
     else:
         st.info("Run train_model.py to generate confusion matrices.")
 
-# ---------------- LIVE WEBCAM EXECUTION LOOP ----------------
+# LIVE WEBCAM EXECUTION LOOP 
 if run_app:
     cap = cv2.VideoCapture(0)
 
@@ -384,7 +393,8 @@ if run_app:
 
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 
-                video_placeholder.image(frame_rgb, channels="RGB", use_column_width=True)
+                
+                video_placeholder.image(frame_rgb, channels="RGB")
 
         finally:
             cap.release()
