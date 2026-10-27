@@ -35,6 +35,23 @@ section[data-testid="stSidebar"] {
     background: #111114;
     border-right: 1px solid #292929;
 }
+/* Force all sidebar text, headers, and labels to be bright */
+section[data-testid="stSidebar"] h2, 
+section[data-testid="stSidebar"] .stMarkdown p,
+section[data-testid="stSidebar"] span,
+section[data-testid="stSidebar"] label {
+    color: #F3F4F6 !important;
+}
+
+/* FORCE ALL MAIN HEADINGS & SUB HEADINGS TO BE BRIGHT WHITE */
+h1, h2, h3, h4, h5, h6, 
+.stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {
+    color: #FFFFFF !important;
+}
+p, span, label {
+    color: #E4E4E7;
+}
+
 .header-box {
     background: linear-gradient(110deg, #171717, #101010);
     border: 1px solid #303030;
@@ -120,6 +137,16 @@ hr {
     border-color: #303030;
 }
 
+/* Fix Tab Text Visibility */
+[data-baseweb="tab"] p, [data-baseweb="tab"] span {
+    color: #D4D4D8 !important;
+    font-weight: 600 !important;
+}
+[data-baseweb="tab"][aria-selected="true"] span, [data-baseweb="tab"][aria-selected="true"] p {
+    color: #EF4444 !important;
+    font-weight: 700 !important;
+}
+
 /* Metric Display Formatting Rules */
 div[data-testid="stMetricValue"] > div {
     font-size: 1.22rem !important;
@@ -136,7 +163,6 @@ div[data-testid="stMetricLabel"] > div {
 """,
     unsafe_allow_html=True,
 )
-
 # Header Banner
 st.markdown(
     """
@@ -280,7 +306,7 @@ with tab_metrics:
     st.markdown("---")
     st.markdown("### Comparative Performance Charts")
     if os.path.exists("model_comparison_graphs.png"):
-        st.image("model_comparison_graphs.png", use_container_width=True)
+        st.image("model_comparison_graphs.png")
     else:
         st.info("Run train_model.py to generate comparative graphs.")
 
@@ -290,7 +316,7 @@ with tab_matrix:
     st.markdown("Detailed true label vs. predicted label comparisons across all three trained algorithms.")
 
     if os.path.exists("confusion_matrices_comparison.png"):
-        st.image("confusion_matrices_comparison.png", use_container_width=True)
+        st.image("confusion_matrices_comparison.png")
     else:
         st.info("Run train_model.py to generate confusion matrices.")
 
@@ -413,7 +439,7 @@ if run_app:
                     mar_bar.empty()
 
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                video_placeholder.image(frame_rgb, channels="RGB", use_container_width=True)
+                video_placeholder.image(frame_rgb, channels="RGB")
 
         finally:
             cap.release()
