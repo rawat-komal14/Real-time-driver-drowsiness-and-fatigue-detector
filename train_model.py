@@ -13,10 +13,10 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
 
 
 def generate_synthetic_dataset(num_samples=2100):
-
     np.random.seed(42)
     n_per_class = num_samples // 3
 
@@ -67,9 +67,9 @@ def train_and_save_model():
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
-    print("2. Training Random Forest & Logistic Regression Models...")
+    print("2. Training Random Forest, Logistic Regression & Support Vector Machine (SVM)...")
 
-    #  Train Random Forest 
+    # --- Train Random Forest ---
     rf_model = RandomForestClassifier(
         n_estimators=100,
         max_depth=4,
@@ -82,108 +82,109 @@ def train_and_save_model():
     rf_pred = rf_model.predict(X_test_scaled)
     rf_proba = rf_model.predict_proba(X_test_scaled)
 
-    #  Train Logistic Regression 
-    
+    # --- Train Logistic Regression ---
     lr_model = LogisticRegression(C=0.005, random_state=42)
     lr_model.fit(X_train_scaled, y_train)
     lr_pred = lr_model.predict(X_test_scaled)
     lr_proba = lr_model.predict_proba(X_test_scaled)
 
-    # Compute Metrics for Random Forest
-    rf_acc = accuracy_score(y_test, rf_pred)
-    rf_prec, rf_rec, rf_f1, _ = precision_recall_fscore_support(
-        y_test, rf_pred, average="weighted", zero_division=0
-    )
+    # --- Train Support Vector Machine (SVM) ---
+    svm_model = SVC(kernel="rbf", C=1.0, probability=True, random_state=42)
+    svm_model.fit(X_train_scaled, y_train)
+    svm_pred = svm_model.predict(X_test_scaled)
+    svm_proba = svm_model.predict_proba(X_test_scaled)
 
-    # Compute Metrics for Logistic Regression
-    lr_acc = accuracy_score(y_test, lr_pred)
-    lr_prec, lr_rec, lr_f1, _ = precision_recall_fscore_support(
-        y_test, lr_pred, average="weighted", zero_division=0
-    )
+    # Metrics Computation Function
+    def get_metrics(y_true, y_pred, y_proba):
+        acc = accuracy_score(y_true, y_pred)
+        prec, rec, f1, _ = precision_recall_fscore_support(
+            y_true, y_pred, average="weighted", zero_division=0
+        )
+        loss = log_loss(y_true, y_proba)
+        return {
+            "accuracy": round(float(acc * 100), 2),
+            "precision": round(float(prec * 100), 2),
+            "recall": round(float(rec * 100), 2),
+            "f1_score": round(float(f1 * 100), 2),
+            "log_loss": round(float(loss), 4),
+        }
 
     metrics_data = {
-        "random_forest": {
-            "accuracy": round(float(rf_acc * 100), 2),
-            "precision": round(float(rf_prec * 100), 2),
-            "recall": round(float(rf_rec * 100), 2),
-            "f1_score": round(float(rf_f1 * 100), 2),
-            "log_loss": round(float(log_loss(y_test, rf_proba)), 4),
-        },
-        "logistic_regression": {
-            "accuracy": round(float(lr_acc * 100), 2),
-            "precision": round(float(lr_prec * 100), 2),
-            "recall": round(float(lr_rec * 100), 2),
-            "f1_score": round(float(lr_f1 * 100), 2),
-            "log_loss": round(float(log_loss(y_test, lr_proba)), 4),
-        },
+        "random_forest": get_metrics(y_test, rf_pred, rf_proba),
+        "logistic_regression": get_metrics(y_test, lr_pred, lr_proba),
+        "svm": get_metrics(y_test, svm_pred, svm_proba),
     }
 
-    print("3. Generating Comparative Evaluation Plots...")
+    print("3. Generating 3-Model Comparative Evaluation Plots...")
 
-    #  Generate Comparative Accuracy & Loss Bar Chart
+    # --- Generate Comparative Accuracy & Loss Bar Charts ---
     with plt.style.context("dark_background"):
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4), facecolor="#151515")
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4.5), facecolor="#151515")
         ax1.set_facecolor("#151515")
         ax2.set_facecolor("#151515")
 
-        models = ["Random Forest", "Logistic Reg."]
-        accuracies = [metrics_data["random_forest"]["accuracy"], metrics_data["logistic_regression"]["accuracy"]]
-        losses = [metrics_data["random_forest"]["log_loss"], metrics_data["logistic_regression"]["log_loss"]]
+        models = ["Random Forest", "Logistic Reg.", "SVM (RBF)"]
+        colors = ["#EF4444", "#3B82F6", "#10B981"]
+        accuracies = [
+            metrics_data["random_forest"]["accuracy"],
+            metrics_data["logistic_regression"]["accuracy"],
+            metrics_data["svm"]["accuracy"],
+        ]
+        losses = [
+            metrics_data["random_forest"]["log_loss"],
+            metrics_data["logistic_regression"]["log_loss"],
+            metrics_data["svm"]["log_loss"],
+        ]
 
         # Accuracy Plot
-        bars1 = ax1.bar(models, accuracies, color=["#EF4444", "#3B82F6"], width=0.5)
+        bars1 = ax1.bar(models, accuracies, color=colors, width=0.45)
         ax1.set_ylabel("Test Accuracy (%)", color="#E5E7EB")
         ax1.set_title("Model Accuracy Comparison", fontweight="bold", color="#FFFFFF", pad=20)
         ax1.set_ylim(80, 103)
         ax1.grid(True, color="#444444", alpha=0.3, axis="y")
         for bar in bars1:
             yval = bar.get_height()
-            ax1.text(bar.get_x() + bar.get_width()/2, yval + 0.8, f"{yval:.2f}%", ha="center", va="bottom", color="white", fontweight="bold")
+            ax1.text(bar.get_x() + bar.get_width() / 2, yval + 0.8, f"{yval:.2f}%", ha="center", va="bottom", color="white", fontweight="bold")
 
-        # Loss Plot (FIXED HEADROOM & TITLE PADDING)
-        bars2 = ax2.bar(models, losses, color=["#EF4444", "#3B82F6"], width=0.5)
+        # Loss Plot
+        bars2 = ax2.bar(models, losses, color=colors, width=0.45)
         ax2.set_ylabel("Log Loss", color="#E5E7EB")
         ax2.set_title("Model Log Loss Comparison", fontweight="bold", color="#FFFFFF", pad=20)
-        ax2.set_ylim(0, max(losses) * 1.45)  # Added headroom so labels don't touch the title
+        ax2.set_ylim(0, max(losses) * 1.45)
         ax2.grid(True, color="#444444", alpha=0.3, axis="y")
         for bar in bars2:
             yval = bar.get_height()
-            ax2.text(bar.get_x() + bar.get_width()/2, yval + 0.003, f"{yval:.4f}", ha="center", va="bottom", color="white", fontweight="bold")
+            ax2.text(bar.get_x() + bar.get_width() / 2, yval + 0.003, f"{yval:.4f}", ha="center", va="bottom", color="white", fontweight="bold")
 
         fig.tight_layout()
         fig.savefig("model_comparison_graphs.png", dpi=160, facecolor=fig.get_facecolor(), bbox_inches="tight")
         plt.close(fig)
 
-    # --- Generate Side-by-Side Confusion Matrices ---
+    # --- Generate 3 Side-by-Side Confusion Matrices ---
     cm_rf = confusion_matrix(y_test, rf_pred, labels=[0, 1, 2])
     cm_lr = confusion_matrix(y_test, lr_pred, labels=[0, 1, 2])
+    cm_svm = confusion_matrix(y_test, svm_pred, labels=[0, 1, 2])
 
     with plt.style.context("dark_background"):
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 5), facecolor="#151515")
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 4.5), facecolor="#151515")
         
-        # RF Matrix
-        ax1.set_facecolor("#151515")
-        ax1.imshow(cm_rf, cmap="Reds")
-        ax1.set_xticks([0, 1, 2], labels=["Alert", "Mild", "Drowsy"])
-        ax1.set_yticks([0, 1, 2], labels=["Alert", "Mild", "Drowsy"])
-        ax1.set_xlabel("Predicted Label", color="#E5E7EB")
-        ax1.set_ylabel("True Label", color="#E5E7EB")
-        ax1.set_title("Random Forest Confusion Matrix", color="#FFFFFF", fontweight="bold", pad=15)
-        for i in range(3):
-            for j in range(3):
-                ax1.text(j, i, str(cm_rf[i, j]), ha="center", va="center", color="white", fontweight="bold")
+        matrices = [
+            (ax1, cm_rf, "Reds", "Random Forest Matrix"),
+            (ax2, cm_lr, "Blues", "Logistic Reg. Matrix"),
+            (ax3, cm_svm, "Greens", "SVM (RBF) Matrix"),
+        ]
 
-        # LR Matrix
-        ax2.set_facecolor("#151515")
-        ax2.imshow(cm_lr, cmap="Blues")
-        ax2.set_xticks([0, 1, 2], labels=["Alert", "Mild", "Drowsy"])
-        ax2.set_yticks([0, 1, 2], labels=["Alert", "Mild", "Drowsy"])
-        ax2.set_xlabel("Predicted Label", color="#E5E7EB")
-        ax2.set_ylabel("True Label", color="#E5E7EB")
-        ax2.set_title("Logistic Regression Confusion Matrix", color="#FFFFFF", fontweight="bold", pad=15)
-        for i in range(3):
-            for j in range(3):
-                ax2.text(j, i, str(cm_lr[i, j]), ha="center", va="center", color="white", fontweight="bold")
+        for ax, cm, cmap, title in matrices:
+            ax.set_facecolor("#151515")
+            ax.imshow(cm, cmap=cmap)
+            ax.set_xticks([0, 1, 2], labels=["Alert", "Mild", "Drowsy"])
+            ax.set_yticks([0, 1, 2], labels=["Alert", "Mild", "Drowsy"])
+            ax.set_xlabel("Predicted Label", color="#E5E7EB")
+            ax.set_ylabel("True Label", color="#E5E7EB")
+            ax.set_title(title, color="#FFFFFF", fontweight="bold", pad=15)
+            for i in range(3):
+                for j in range(3):
+                    ax.text(j, i, str(cm[i, j]), ha="center", va="center", color="white", fontweight="bold")
 
         fig.tight_layout()
         fig.savefig("confusion_matrices_comparison.png", dpi=160, facecolor=fig.get_facecolor(), bbox_inches="tight")
@@ -192,6 +193,7 @@ def train_and_save_model():
     print("\n--- Model Evaluation Results ---")
     print(f"Random Forest Accuracy       : {metrics_data['random_forest']['accuracy']}%")
     print(f"Logistic Regression Accuracy : {metrics_data['logistic_regression']['accuracy']}%")
+    print(f"SVM (RBF Kernel) Accuracy    : {metrics_data['svm']['accuracy']}%")
 
     # Serialize Random Forest as primary deployment model alongside scaler
     joblib.dump(rf_model, "drowsiness_model.pkl")
@@ -200,7 +202,7 @@ def train_and_save_model():
     with open("metrics.json", "w") as f:
         json.dump(metrics_data, f, indent=4)
 
-    print("Success! Saved primary model, scaler, metrics.json, and comparison charts.")
+    print("Success! Saved primary model, scaler, metrics.json, and 3-model comparison charts.")
 
 
 if __name__ == "__main__":

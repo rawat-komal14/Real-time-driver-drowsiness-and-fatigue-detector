@@ -12,5 +12,12 @@
         "recall": 93.81,
         "f1_score": 93.68,
         "log_loss": 0.4854
+    },
+    "svm": {
+        "accuracy": 96.19,
+        "precision": 96.19,
+        "recall": 96.19,
+        "f1_score": 96.18,
+        "log_loss": 0.1078
     }
 }

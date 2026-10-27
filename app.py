@@ -184,7 +184,7 @@ tab_live, tab_metrics, tab_matrix = st.tabs([
     "🧩 Confusion Matrices"
 ])
 
-# LIVE MONITORING
+# TAB 1: LIVE MONITORING
 with tab_live:
     st.markdown("### Real-Time Webcam Inference & Active Safety Monitoring")
     st.markdown("Stream active video analysis, eye/mouth tracking parameters, and instant hazard alerts.")
@@ -230,12 +230,13 @@ with tab_metrics:
     if metrics and "random_forest" in metrics:
         rf = metrics["random_forest"]
         lr = metrics["logistic_regression"]
+        svm = metrics.get("svm", {"accuracy": "--", "precision": "--", "recall": "--", "f1_score": "--"})
 
-        col_rf, col_lr = st.columns(2, gap="large")
+        col_rf, col_lr, col_svm = st.columns(3, gap="medium")
 
         with col_rf:
             with st.container(border=True):
-                st.markdown("#### 🌲 Random Forest Classifier (Primary Model)")
+                st.markdown("#### 🌲 Random Forest")
                 c1, c2, c3, c4 = st.columns(4)
                 c1.metric("Accuracy", f"{rf['accuracy']}%")
                 c2.metric("Precision", f"{rf['precision']}%")
@@ -244,36 +245,42 @@ with tab_metrics:
 
         with col_lr:
             with st.container(border=True):
-                st.markdown("#### 📈 Logistic Regression Classifier")
+                st.markdown("#### 📈 Logistic Regression")
                 c1, c2, c3, c4 = st.columns(4)
                 c1.metric("Accuracy", f"{lr['accuracy']}%")
                 c2.metric("Precision", f"{lr['precision']}%")
                 c3.metric("Recall", f"{lr['recall']}%")
                 c4.metric("F1 Score", f"{lr['f1_score']}%")
+
+        with col_svm:
+            with st.container(border=True):
+                st.markdown("#### 🎯 Support Vector Machine")
+                c1, c2, c3, c4 = st.columns(4)
+                c1.metric("Accuracy", f"{svm['accuracy']}%")
+                c2.metric("Precision", f"{svm['precision']}%")
+                c3.metric("Recall", f"{svm['recall']}%")
+                c4.metric("F1 Score", f"{svm['f1_score']}%")
     else:
         st.warning("Metrics file not found. Run 'python train_model.py'.")
 
     st.markdown("---")
     st.markdown("### Comparative Performance Charts")
     if os.path.exists("model_comparison_graphs.png"):
-        
-        
-        st.image("model_comparison_graphs.png")
+        st.image("model_comparison_graphs.png", use_container_width=True)
     else:
         st.info("Run train_model.py to generate comparative graphs.")
 
-#  TAB 3: CONFUSION MATRICES
+# TAB 3: CONFUSION MATRICES
 with tab_matrix:
     st.markdown("### Classification Breakdown (Confusion Matrices)")
-    st.markdown("Detailed true label vs. predicted label comparisons for multi-class fatigue detection.")
+    st.markdown("Detailed true label vs. predicted label comparisons across all three trained algorithms.")
 
     if os.path.exists("confusion_matrices_comparison.png"):
-        
-        st.image("model_comparison_graphs.png")
+        st.image("confusion_matrices_comparison.png", use_container_width=True)
     else:
         st.info("Run train_model.py to generate confusion matrices.")
 
-# LIVE WEBCAM EXECUTION LOOP 
+# LIVE WEBCAM EXECUTION LOOP
 if run_app:
     cap = cv2.VideoCapture(0)
 
@@ -392,9 +399,7 @@ if run_app:
                     mar_bar.empty()
 
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                
-                
-                video_placeholder.image(frame_rgb, channels="RGB")
+                video_placeholder.image(frame_rgb, channels="RGB", use_container_width=True)
 
         finally:
             cap.release()
