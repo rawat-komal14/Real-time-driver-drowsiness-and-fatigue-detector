@@ -120,11 +120,16 @@ hr {
     border-color: #303030;
 }
 
-[data-testid="stMetricValue"] {
-    color: #FFFFFF !important;
+/* Metric Display Formatting Rules */
+div[data-testid="stMetricValue"] > div {
+    font-size: 1.22rem !important;
     font-weight: 800 !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    color: #FFFFFF !important;
 }
-[data-testid="stMetricLabel"] {
+div[data-testid="stMetricLabel"] > div {
+    font-size: 0.78rem !important;
     color: #D4D4D8 !important;
 }
 </style>
@@ -234,32 +239,41 @@ with tab_metrics:
 
         col_rf, col_lr, col_svm = st.columns(3, gap="medium")
 
+        # Random Forest Card (2x2 Grid Layout)
         with col_rf:
             with st.container(border=True):
                 st.markdown("#### 🌲 Random Forest")
-                c1, c2, c3, c4 = st.columns(4)
-                c1.metric("Accuracy", f"{rf['accuracy']}%")
-                c2.metric("Precision", f"{rf['precision']}%")
-                c3.metric("Recall", f"{rf['recall']}%")
-                c4.metric("F1 Score", f"{rf['f1_score']}%")
+                r1_1, r1_2 = st.columns(2)
+                r1_1.metric("Accuracy", f"{rf['accuracy']}%")
+                r1_2.metric("Precision", f"{rf['precision']}%")
+                
+                r2_1, r2_2 = st.columns(2)
+                r2_1.metric("Recall", f"{rf['recall']}%")
+                r2_2.metric("F1 Score", f"{rf['f1_score']}%")
 
+        # Logistic Regression Card (2x2 Grid Layout)
         with col_lr:
             with st.container(border=True):
                 st.markdown("#### 📈 Logistic Regression")
-                c1, c2, c3, c4 = st.columns(4)
-                c1.metric("Accuracy", f"{lr['accuracy']}%")
-                c2.metric("Precision", f"{lr['precision']}%")
-                c3.metric("Recall", f"{lr['recall']}%")
-                c4.metric("F1 Score", f"{lr['f1_score']}%")
+                r1_1, r1_2 = st.columns(2)
+                r1_1.metric("Accuracy", f"{lr['accuracy']}%")
+                r1_2.metric("Precision", f"{lr['precision']}%")
+                
+                r2_1, r2_2 = st.columns(2)
+                r2_1.metric("Recall", f"{lr['recall']}%")
+                r2_2.metric("F1 Score", f"{lr['f1_score']}%")
 
+        # Support Vector Machine Card (2x2 Grid Layout)
         with col_svm:
             with st.container(border=True):
                 st.markdown("#### 🎯 Support Vector Machine")
-                c1, c2, c3, c4 = st.columns(4)
-                c1.metric("Accuracy", f"{svm['accuracy']}%")
-                c2.metric("Precision", f"{svm['precision']}%")
-                c3.metric("Recall", f"{svm['recall']}%")
-                c4.metric("F1 Score", f"{svm['f1_score']}%")
+                r1_1, r1_2 = st.columns(2)
+                r1_1.metric("Accuracy", f"{svm['accuracy']}%")
+                r1_2.metric("Precision", f"{svm['precision']}%")
+                
+                r2_1, r2_2 = st.columns(2)
+                r2_1.metric("Recall", f"{svm['recall']}%")
+                r2_2.metric("F1 Score", f"{svm['f1_score']}%")
     else:
         st.warning("Metrics file not found. Run 'python train_model.py'.")
 
