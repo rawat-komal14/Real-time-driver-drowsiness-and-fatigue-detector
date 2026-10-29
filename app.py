@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import os
 import cv2
@@ -35,7 +36,6 @@ section[data-testid="stSidebar"] {
     background: #111114;
     border-right: 1px solid #292929;
 }
-/* Force all sidebar text, headers, and labels to be bright */
 section[data-testid="stSidebar"] h2, 
 section[data-testid="stSidebar"] .stMarkdown p,
 section[data-testid="stSidebar"] span,
@@ -43,7 +43,6 @@ section[data-testid="stSidebar"] label {
     color: #F3F4F6 !important;
 }
 
-/* FORCE ALL MAIN HEADINGS & SUB HEADINGS TO BE BRIGHT WHITE */
 h1, h2, h3, h4, h5, h6, 
 .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {
     color: #FFFFFF !important;
@@ -137,7 +136,6 @@ hr {
     border-color: #303030;
 }
 
-/* Fix Tab Text Visibility */
 [data-baseweb="tab"] p, [data-baseweb="tab"] span {
     color: #D4D4D8 !important;
     font-weight: 600 !important;
@@ -147,7 +145,6 @@ hr {
     font-weight: 700 !important;
 }
 
-/* Metric Display Formatting Rules */
 div[data-testid="stMetricValue"] > div {
     font-size: 1.22rem !important;
     font-weight: 800 !important;
@@ -163,6 +160,7 @@ div[data-testid="stMetricLabel"] > div {
 """,
     unsafe_allow_html=True,
 )
+
 # Header Banner
 st.markdown(
     """
@@ -196,10 +194,24 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# Sidebar Controls
+# Sidebar Controls & Settings
 st.sidebar.markdown("## ⚙️ Control Panel")
-run_app = st.sidebar.toggle("Start Camera", value=False)
+run_app = st.sidebar.toggle("Start Camera", key="run_app")
 st.sidebar.caption("Toggle to activate live webcam inference.")
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("## 🎛️ Calibration & Settings")
+
+ear_threshold = st.sidebar.slider(
+    "EAR Closure Threshold", 
+    min_value=0.12, max_value=0.25, value=0.18, step=0.01,
+    help="Adjust sensitivity for eye closure detection."
+)
+alarm_delay_frames = st.sidebar.slider(
+    "Alarm Delay (Frames)", 
+    min_value=1, max_value=15, value=5, step=1,
+    help="Number of consecutive frames required to trigger alert."
+)
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("## 📌 Reference Metrics")
@@ -242,7 +254,6 @@ with tab_live:
             mar_bar = st.empty()
             alarm_placeholder = st.empty()
 
-            # Initialize placeholders when idle
             if not run_app:
                 ear_card.markdown(
                     '<div class="metric-tile"><div class="metric-label">Eye Aspect Ratio (EAR)</div><div class="metric-value">--</div></div>',
@@ -265,7 +276,6 @@ with tab_metrics:
 
         col_rf, col_lr, col_svm = st.columns(3, gap="medium")
 
-        # Random Forest Card (2x2 Grid Layout)
         with col_rf:
             with st.container(border=True):
                 st.markdown("#### 🌲 Random Forest")
@@ -277,7 +287,6 @@ with tab_metrics:
                 r2_1.metric("Recall", f"{rf['recall']}%")
                 r2_2.metric("F1 Score", f"{rf['f1_score']}%")
 
-        # Logistic Regression Card (2x2 Grid Layout)
         with col_lr:
             with st.container(border=True):
                 st.markdown("#### 📈 Logistic Regression")
@@ -289,7 +298,6 @@ with tab_metrics:
                 r2_1.metric("Recall", f"{lr['recall']}%")
                 r2_2.metric("F1 Score", f"{lr['f1_score']}%")
 
-        # Support Vector Machine Card (2x2 Grid Layout)
         with col_svm:
             with st.container(border=True):
                 st.markdown("#### 🎯 Support Vector Machine")
@@ -320,12 +328,9 @@ with tab_matrix:
     else:
         st.info("Run train_model.py to generate confusion matrices.")
 
-# LIVE WEBCAM EXECUTION LOOP
+# LIVE WEBCAM EXECUTION LOOP (High-Performance Blocking While Loop)
 if run_app:
     cap = cv2.VideoCapture(0)
-
-    EYE_CLOSED_THRESHOLD = 0.18
-    ALARM_THRESHOLD_FRAMES = 5
 
     closed_eye_counter = 0
     drowsy_frame_counter = 0
@@ -340,6 +345,9 @@ if run_app:
                 if not ret:
                     st.error("Camera stream unavailable.")
                     break
+
+                # Downscale to 640x480 for lightning-fast face landmark processing
+                frame = cv2.resize(frame, (640, 480))
 
                 frame, ear, mar, face_found = extract_features(frame)
 
@@ -366,7 +374,7 @@ if run_app:
                     )
                     mar_bar.progress(min(max(float(mar / 0.8), 0.0), 1.0))
 
-                    if ear < EYE_CLOSED_THRESHOLD:
+                    if ear < ear_threshold:
                         closed_eye_counter += 1
                     else:
                         closed_eye_counter = 0
@@ -376,8 +384,8 @@ if run_app:
                     else:
                         drowsy_frame_counter = 0
 
-                    sustained_eye_closure = (closed_eye_counter >= ALARM_THRESHOLD_FRAMES)
-                    sustained_drowsiness = (drowsy_frame_counter >= ALARM_THRESHOLD_FRAMES)
+                    sustained_eye_closure = (closed_eye_counter >= alarm_delay_frames)
+                    sustained_drowsiness = (drowsy_frame_counter >= alarm_delay_frames)
 
                     if sustained_eye_closure or sustained_drowsiness:
                         status_txt = "CRITICAL DROWSINESS"
@@ -389,8 +397,15 @@ if run_app:
                             unsafe_allow_html=True,
                         )
 
-                        if not alarm_active and winsound:
-                            winsound.Beep(2500, 700)
+                        if not alarm_active:
+                            if winsound:
+                                winsound.Beep(2500, 700)
+                            
+                            os.makedirs("captures", exist_ok=True)
+                            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                            snapshot_path = os.path.join("captures", f"drowsy_alert_{timestamp}.jpg")
+                            cv2.imwrite(snapshot_path, frame)
+                            st.toast(f"📸 Evidence snapshot saved: {snapshot_path}", icon="🚨")
 
                         alarm_active = True
 

@@ -60,6 +60,13 @@ def calculate_mar(mouth_landmarks):
     return v / h
 
 
+def calculate_mar(mouth_landmarks):
+    """Calculates Mouth Aspect Ratio (MAR). Increases during yawning."""
+    v = euclidean_distance(mouth_landmarks[2], mouth_landmarks[3])
+    h = euclidean_distance(mouth_landmarks[0], mouth_landmarks[1])
+    return v / h
+
+
 def extract_features(frame):
     """Processes a video frame and returns extracted facial features:
 
@@ -96,7 +103,6 @@ def extract_features(frame):
     mar = calculate_mar(mouth)
 
     return frame, avg_ear, mar, True
-
 
 if __name__ == "__main__":
     cap = cv2.VideoCapture(0)
